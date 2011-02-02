@@ -19,9 +19,19 @@ package sample;
 
 
 public class Sample {
+	
 	private String SAMPLE_PRIVATE_STRING = "private string from sample";
 	public String  SAMPLE_PUBLIC_STRING = "public string from sample";
 	public String NULL_STRING = null;
+	
+    /**
+     * We can define an array to specify which value are override by
+     * property file
+     */
+	private String[] param = new String[] {
+            "SAMPLE_PRIVATE_STRING"
+    }; 
+    
 	
     public static void main(String[] args) throws Exception {
         Sample t = new Sample();
@@ -39,6 +49,7 @@ public class Sample {
          * dans un premier temps, uniquement pour les variables nulles
          */
         Config.updateParam(t);
+        System.out.println("Update just null value from this class : ");
         System.out.println("Sample.SAMPLE_PRIVATE_STRING :" + t.SAMPLE_PRIVATE_STRING);
         System.out.println("Sample.SAMPLE_PUBLIC_STRING :" + t.SAMPLE_PUBLIC_STRING);
         System.out.println("Sample.NULL_STRING :" + t.NULL_STRING);
@@ -48,8 +59,20 @@ public class Sample {
          * non nulles
          */
         Config.updateParam(t,true);
+        System.out.println("We can erase non null value : ");
         System.out.println("Sample.SAMPLE_PRIVATE_STRING :" + t.SAMPLE_PRIVATE_STRING);
         System.out.println("Sample.SAMPLE_PUBLIC_STRING :" + t.SAMPLE_PUBLIC_STRING);
-        System.out.println("Sample.NULL_STRING :" + t.NULL_STRING);    
+        System.out.println("Sample.NULL_STRING :" + t.NULL_STRING);
+        
+        /**
+         * On peut specifier le nom complet de la classe dans le
+         * fichier propriété
+         */
+        Config.useClassName(true);
+        Config.updateParam(t,true);
+        System.out.println("We can specify package in property file : ");
+        System.out.println("Sample.SAMPLE_PRIVATE_STRING :" + t.SAMPLE_PRIVATE_STRING);
+        System.out.println("Sample.SAMPLE_PUBLIC_STRING :" + t.SAMPLE_PUBLIC_STRING);
+        System.out.println("Sample.NULL_STRING :" + t.NULL_STRING);
     }
 }

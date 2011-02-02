@@ -27,8 +27,8 @@ public class Config extends Param {
     
     public static Boolean BOOLEAN = true;
     
-	public static String SAMPLE_PRIVATE_STRING = "private string from sample";
-	public static String  SAMPLE_PUBLIC_STRING = "public string from sample";
+	private static String SAMPLE_PRIVATE_STRING = "private string from sample";
+	public static String SAMPLE_PUBLIC_STRING  = "public string from sample";
 	public static String NULL_STRING = null;
 	
     /**
@@ -36,6 +36,5 @@ public class Config extends Param {
      * Celle-ci étendant param, la méthode init() permet de modifier les valeurs définies
      * ci-dessus par celle définie dans le fichier properties
      */
-    @SuppressWarnings("unused")
-    private static Object init = init(Config.class);
+    static {init();}
 }

@@ -15,7 +15,7 @@
   *  for jLibParamLibrary
   */
 
-package sample;
+package org.jLib.Param.sample;
 
 
 public class Sample {

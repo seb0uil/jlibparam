@@ -15,7 +15,7 @@
   *  
   */
 
-package org.jlibparam;
+package org.jLib.Param;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -94,6 +94,19 @@ public class Param {
         } 
     }
 
+    public static void init(Boolean UseClazzName) {
+        try {
+        	UseClassName = UseClazzName;
+            /*On devine la classe*/
+            Throwable t = new Throwable();
+            t.fillInStackTrace();
+            StackTraceElement[] stack = t.getStackTrace();
+            init( Class.forName(stack[1].getClassName()) );
+        } catch (Exception e) {
+            e.printStackTrace();
+        } 
+    }
+    
     /**
      * Fichier de propriétés contenant les paramètres à surcharger
      */
@@ -139,7 +152,7 @@ public class Param {
                     /* Dans l'initialisation, on ne s'intéresse qu'aux champs statiques */
                     if (Modifier.isStatic(field.getModifiers())) {
                         field.setAccessible(true);
-                        if (properties.containsKey(field.getName())) {
+                        if (properties.containsKey(ClazzName + field.getName())) {
                             String sProp = properties.getProperty(ClazzName + field.getName());
                             field.set(clazz,  ObjectConverter.convert(sProp, field.getType()) );
                         }

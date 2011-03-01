@@ -1,4 +1,4 @@
-package org.jlibparam;
+package org.jLib.Param;
 
 /*
  * net/balusc/util/ObjectConverter.java

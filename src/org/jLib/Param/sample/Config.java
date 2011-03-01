@@ -15,9 +15,9 @@
   *  for jLibParamLibrary
   */
 
-package sample;
+package org.jLib.Param.sample;
 
-import org.jlibparam.Param;
+import org.jLib.Param.Param;;
 
 public class Config extends Param {
 		

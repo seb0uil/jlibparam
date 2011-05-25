@@ -11,18 +11,20 @@
   * You should have received a copy of the GNU Lesser General Public License along with this library.
   * If not, see <http://www.gnu.org/licenses/>.
   * 
-  *  The Original Code was written by SÃ©bastien Bettinger <seb0uil@gmail.com>
+  *  The Original Code was written by Sébastien Bettinger <seb0uil@gmail.com>
   *  for jLibParamLibrary
   */
 
 package org.jLib.Param.sample;
 
-import org.jLib.Param.Param;;
+import org.jLib.Param.Param;
+import org.jLib.Param.jmx;
 
 public class Config extends Param {
 		
     public static String STRING  = "initial value";
     
+    @jmx("La valeur de mon entier")
     public static Integer INTEGER = 1;
     
     public static Boolean BOOLEAN = true;
@@ -33,8 +35,8 @@ public class Config extends Param {
 	
     /**
      * Valeur ne servant qu'a initialiser la classe pour ses valeurs statiques
-     * Celle-ci Ã©tendant param, la mÃ©thode init() permet de modifier les valeurs dÃ©finies
-     * ci-dessus par celle dÃ©finie dans le fichier properties
+     * Celle-ci étendant param, la méthode init() permet de modifier les valeurs définies
+     * ci-dessus par celle définie dans le fichier properties
      */
     static {init();}
 }

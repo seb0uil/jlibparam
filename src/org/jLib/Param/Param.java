@@ -19,19 +19,45 @@ package org.jLib.Param;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Properties;
+
+import javax.management.Attribute;
+import javax.management.AttributeList;
+import javax.management.AttributeNotFoundException;
+import javax.management.DynamicMBean;
+import javax.management.InvalidAttributeValueException;
+import javax.management.MBeanAttributeInfo;
+import javax.management.MBeanConstructorInfo;
+import javax.management.MBeanException;
+import javax.management.MBeanInfo;
+import javax.management.MBeanNotificationInfo;
+import javax.management.MBeanOperationInfo;
+import javax.management.ReflectionException;
+import javax.management.RuntimeOperationsException;
 
 
 /**
  * La classe Param<br/>
- * Permet de mettre � jour automatiquement les variables d'une classe par rapport � celles
- * stock�es dans un fichier poperties.
+ * Permet de mettre à jour automatiquement les variables d'une classe par rapport à celles
+ * stockées dans un fichier poperties.
  *
  * @author  Sebastien_Bettinger
  */
-public class Param {
+public class Param implements DynamicMBean {
+	/**
+	 * Fichier de propriétés contenant les paramètres à surcharger
+	 */
+	static private Properties properties = new Properties();
+
 	/**
 	 * Fichier propertie contenant les valeurs a surcharger
 	 */
@@ -49,17 +75,20 @@ public class Param {
 	 */
 	private static Boolean UseClassName = false;
 
+	/**
+	 * Classe appelante la librairie
+	 */
 	private static Class clazz = null;
 
 	/**
 	 * 
-	 * M�thode init.<br>
-	 * R�le : Permet d'initialiser la classe pour les valeurs statiques<br/>
+	 * Méthode init.<br>
+	 * Rôle : Permet d'initialiser la classe pour les valeurs statiques<br/>
 	 * s'emploie tel que, par exemple :<br/>
 	 * <ul>
 	 * <i>static {init(Annuaire.class);}</i><br/>
 	 * </ul>
-	 * <b><u>/!\</u> il faut placer cette d�claration en derni�re dans la classe, les variables d�clar�es avant de sont pas prise en compte par ce traitement</b>
+	 * <b><u>/!\</u> il faut placer cette déclaration en dernière dans la classe, les variables déclarées après ne sont pas prise en compte par ce traitement</b>
 	 *
 	 * @param clazz
 	 */
@@ -75,14 +104,14 @@ public class Param {
 
 	/**
 	 * 
-	 * M�thode init.<br>
-	 * R�le : Permet d'initialiser la classe pour les valeurs statiques<br/>
+	 * Méthode init.<br>
+	 * Rôle : Permet d'initialiser la classe pour les valeurs statiques<br/>
 	 * s'emploie tel que, par exemple :<br/>
 	 * <ul>
 	 * <i>static {init();}</i><br/>
 	 * </ul>
-	 * Cette m�thode tente de trouver par elle-m�me le nom de la classe � initialiser.<p/>
-	 * <b><u>/!\</u> il faut placer cette d�claration en derni�re dans la classe, les variables d�clar�es avant de sont pas prise en compte par ce traitement</b>
+	 * Cette méthode tente de trouver par elle-même le nom de la classe à initialiser.<p/>
+	 * <b><u>/!\</u> il faut placer cette déclaration en dernière dans la classe, les variables déclarées après ne sont pas prise en compte par ce traitement</b>
 	 *
 	 */
 	public static void init() {
@@ -96,38 +125,24 @@ public class Param {
 	}
 
 	/**
-	 * M�thode guessClass<br/>
-	 * R�le : Devine la classe appelante la librairie
-	 * @return class appelante
-	 * @throws ClassNotFoundException
-	 */
-	public static Class guessClass() throws ClassNotFoundException {
-		/*On devine la classe*/
-		Throwable t = new Throwable();
-		t.fillInStackTrace();
-		StackTraceElement[] stack = t.getStackTrace();
-		return Class.forName(stack[2].getClassName());
-	}
-	
-	/**
 	 * 
-	 * M�thode init.<br>
-	 * R�le : Permet d'initialiser la classe pour les valeurs statiques<br/>
+	 * Méthode init.<br>
+	 * R�ôe : Permet d'initialiser la classe pour les valeurs statiques<br/>
 	 * s'emploie tel que, par exemple :<br/>
 	 * <ul>
 	 * <i>static {init();}</i><br/>
 	 * </ul>
-	 * Cette m�thode tente de trouver par elle-m�me le nom de la classe � initialiser.<p/>
-	 * <b><u>/!\</u> il faut placer cette d�claration en derni�re dans la classe, les variables d�clar�es avant de sont pas prise en compte par ce traitement</b>
+	 * Cette méthode tente de trouver par elle-même le nom de la classe à initialiser.<p/>
+	 * <b><u>/!\</u> il faut placer cette déclaration en dernière dans la classe, les variables déclarées après ne sont pas prise en compte par ce traitement</b>
 	 *
-	 * @param UseClazzName : Flag indiquant si les param�tres sont pr�fix�s ou non
+	 * @param UseClazzName : Flag indiquant si les paramêtres sont préfixés ou non
 	 *  du nom de la classe
 	 */
 	public static void init(Boolean UseClazzName) {
 		try {
 			UseClassName = UseClazzName;
 			/*
-			 * Si l'on sp�cifie le nom de la classe, on recup�re celui-ci
+			 * Si l'on spécifie le nom de la classe, on recupère celui-ci
 			 */
 			if (UseClassName) clazz = guessClass();
 			init();
@@ -137,45 +152,26 @@ public class Param {
 	}
 
 	/**
-	 * Fichier de propri�t�s contenant les param�tres � surcharger
-	 */
-	static private Properties properties = new Properties();
-
-	/**
 	 * 
-	 * M�thode initParam.<br>
-	 * R�le : On lui passe un tableau contenant le nom des variables a initialiser<br/>
+	 * Méthode initParam.<br>
+	 * Rôle : On lui passe un tableau contenant le nom des variables a initialiser<br/>
 	 * Si ces variables statiques existent dans la classe clazz, on modifie la valeur de ce variable
 	 * a partir du fichier properties.
 	 * Si param est null, on tente de lire toutes les variables du fichier properties
 	 *
-	 * @param clazz : Classe dont les valeurs sont � initialiser.
-	 * @param param : tableau des param�tres � initialiser, ou null pour initialiser toutes les variables
+	 * @param clazz : Classe dont les valeurs sont à initialiser.
+	 * @param param : tableau des paramètres à initialiser, ou null pour initialiser toutes les variables
 	 * @throws Exception
 	 */
 	static public void initParam(String[] param) throws ClassNotFoundException, IllegalArgumentException, IllegalAccessException {
 		updateParam(clazz, param, false);
-	}
+	}	
 
 	/**
 	 * 
-	 * @param allField
-	 * @return
-	 */
-	static private String[] FieldToArray(HashMap<String, Field> allField) {
-		String[] param = new String[allField.size()];
-		int i=0;
-		for (Field field : allField.values()) {
-			param[i++] = field.getName();
-		}
-		return param;
-	}
-	
-	/**
-	 * 
-	 * M�thode updateParam.<br>
-	 * R�le : remplace les valeurs des attributs de la classe appelante par celle de la classe �tendant Param.<br/>
-	 * Par d�faut, ne remplace la valeur que des param�tres ayant une valeur =null 
+	 * Méthode updateParam.<br>
+	 * Rôle : remplace les valeurs des attributs de la classe appelante par celle de la classe étendant Param.<br/>
+	 * Par défaut, ne remplace la valeur que des paramètres ayant une valeur <b>=null</b> 
 	 *
 	 * @param o : la classe appelante (typiquement <i>this</i>)
 	 * 
@@ -183,74 +179,57 @@ public class Param {
 	static public void updateParam(Class o) {
 		updateParam(o,null,false);
 	}
-	
-	
+
 	static public void updateParam(Object o) {
 		updateParamInstance(o,null,false);
-	}
-	
-	/**
-	 * 
-	 * @param o
-	 * @return La classe retrouvé à partir du nom
-	 */
-	static private Class getClassFromName (Object o) {
-		try {
-			return Class.forName(o.getClass().getName());
-		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return null;
 	}
 
 	/**
 	 * 
-	 * M�thode updateParam.<br>
-	 * R�le : remplace les valeurs des attributs de la classe appelante par celle de la classe �tendant Param.<br/>
+	 * Méthode updateParam.<br>
+	 * Rôle : remplace les valeurs des attributs de la classe appelante par celle de la classe étendant Param.<br/>
 	 *
 	 * @param o : la classe appelante (typiquement <i>this</i>)
-	 * @param force : force le remplacement des valeurs, m�me pour les attributs non null
+	 * @param force : force le remplacement des valeurs, même pour les attributs non null
 	 */
 	static public void updateParam(Class o, boolean force) {
 		updateParam(o,null,force);
 	}
 
-	
 	/**
 	 * 
-	 * M�thode updateParam.<br>
-	 * R�le : remplace les valeurs des attributs de la classe appelante par celle de la classe �tendant Param.<br/>
+	 * Méthode updateParam.<br>
+	 * Rôle : remplace les valeurs des attributs de la classe appelante par celle de la classe étendant Param.<br/>
 	 *
-	 * @param o : la classe appelante (typiquement <i>this</i>)
-	 * @param force : force le remplacement des valeurs, m�me pour les attributs non null
+	 * @param o : l'objet appelant
+	 * @param force : force le remplacement des valeurs, même pour les attributs non null
 	 */
 	static public void updateParam(Object o, boolean force) {
 		updateParamInstance(o,null,force);
 	}	
-	
+
 	/**
 	 * 
-	 * M�thode updateParam.<br>
-	 * R�le : remplace les valeurs des attributs de la classe appelante par celle de la classe �tendant Param.<br/>
-	 * Par d�faut, ne remplace la valeur que des param�tres ayant une valeur =null 
+	 * Méthode updateParam.<br>
+	 * Rôle : remplace les valeurs des attributs de la classe appelante par celle de la classe étendant Param.<br/>
+	 * Par défaut, ne remplace la valeur que des paramètres ayant une valeur =null 
 	 *
 	 * @param o : la classe appelante (typiquement <i>this</i>)
-	 * @param param : la liste des attributs � modifier (ou null si tous les attributs sont susceptible d'�tre modifi�s)<br/>
+	 * @param param : la liste des attributs à modifier (ou null si tous les attributs sont susceptible d'être modifiés)<br/>
 	 * 
 	 */
 	static public void updateParam(Class o, String[] param) {
 		updateParam(o,param,false);
 	}
-	
+
 	/**
 	 * 
-	 * M�thode updateParam.<br>
-	 * R�le : remplace les valeurs des attributs de la classe appelante par celle de la classe �tendant Param.<br/>
-	 * Par d�faut, ne remplace la valeur que des param�tres ayant une valeur =null 
+	 * Méthode updateParam.<br>
+	 * Rôle : remplace les valeurs des attributs de la classe appelante par celle de la classe étendant Param.<br/>
+	 * Par défaut, ne remplace la valeur que des paramètres ayant une valeur =null 
 	 *
 	 * @param o : la classe appelante (typiquement <i>this</i>)
-	 * @param param : la liste des attributs � modifier (ou null si tous les attributs sont susceptible d'�tre modifi�s)<br/>
+	 * @param param : la liste des attributs à modifier (ou null si tous les attributs sont susceptible d'être modifiés)<br/>
 	 * 
 	 */
 	static public void updateParam(Object o, String[] param) {
@@ -260,13 +239,13 @@ public class Param {
 
 	/**
 	 * 
-	 * M�thode updateParam.<br>
-	 * R�le : remplace les valeurs des attributs de la classe appelante par celle de la classe �tendant Param.<br/>
-	 * Par d�faut, ne remplace la valeur que des param�tres ayant une valeur =null 
+	 * Méthode updateParam.<br>
+	 * Rôle : remplace les valeurs des attributs de la classe appelante par celle de la classe étendant Param.<br/>
+	 * Par défaut, ne remplace la valeur que des paramètres ayant une valeur =null 
 	 *
 	 * @param o : la classe appelante (typiquement <i>this</i>)
-	 * @param param : la liste des attributs � modifier (ou null si tous les attributs sont susceptible d'�tre modifi�s)<br/>     
-	 * @param force : force le remplacement des valeurs, m�me pour les attributs non null
+	 * @param param : la liste des attributs à modifier (ou null si tous les attributs sont susceptible d'être modifiés)<br/>     
+	 * @param force : force le remplacement des valeurs, même pour les attributs non null
 	 */
 	static public void updateParam(Class o, String[] param, boolean force) {
 		/**
@@ -274,7 +253,7 @@ public class Param {
 		 */
 		try {
 			String ClassName = o.getName();
-			
+
 
 			String ClazzName = "";
 			if (UseClassName) ClazzName = ClassName + ".";
@@ -311,13 +290,13 @@ public class Param {
 
 	/**
 	 * 
-	 * M�thode updateParam.<br>
-	 * R�le : remplace les valeurs des attributs de la classe appelante par celle de la classe �tendant Param.<br/>
-	 * Par d�faut, ne remplace la valeur que des param�tres ayant une valeur =null 
+	 * Méthode updateParam.<br>
+	 * Rôle : remplace les valeurs des attributs de la classe appelante par celle de la classe étendant Param.<br/>
+	 * Par défaut, ne remplace la valeur que des paramètres ayant une valeur =null 
 	 *
-	 * @param o : la classe appelante (typiquement <i>this</i>)
-	 * @param param : la liste des attributs � modifier (ou null si tous les attributs sont susceptible d'�tre modifi�s)<br/>     
-	 * @param force : force le remplacement des valeurs, m�me pour les attributs non null
+	 * @param o : l'objet appelant
+	 * @param param : la liste des attributs à modifier (ou null si tous les attributs sont susceptible d'être modifiés)<br/>     
+	 * @param force : force le remplacement des valeurs, même pour les attributs non null
 	 */
 	static public void updateParamInstance(Object o, String[] param, boolean force) {
 		/**
@@ -326,7 +305,7 @@ public class Param {
 		try {
 			String ClassName = o.getClass().getName();
 			Class c = Class.forName(ClassName);
-			
+
 
 			String ClazzName = "";
 			if (UseClassName) ClazzName = ClassName + ".";
@@ -336,9 +315,9 @@ public class Param {
 			 * Si param est nul, on prend tous les champs de l'objet
 			 */
 			if (param == null) {
-				param = FieldToArray(allField);
+				param = HashToArray(allField);
 			}
-			
+
 			for (int i=0; i<param.length; i++) {
 				try {
 					Field field = c.getDeclaredField(param[i]);
@@ -360,8 +339,8 @@ public class Param {
 	}	
 
 	/**
-	 * M�thode setParam<br/>
-	 * R�le : Met a jour dynamiquement la valeur d'une variable de la classe
+	 * Méthode setParam<br/>
+	 * Rôle : Met a jour dynamiquement la valeur d'une variable de la classe
 	 * @param Name
 	 * @param Value
 	 * @throws Exception
@@ -371,33 +350,77 @@ public class Param {
 		field.set(clazz, ObjectConverter.convert(Value, field.getType()));
 	}
 
-	
 	/**
-	 * Retourne tous les champs de la classe pass�e en param�tre (y compris ceux de la classe m�re)
+	 * Méthode getAllFieldsRec<br/>
+	 * Rôle : Retourne tous les champs de la classe passée en paramètre (y compris ceux de la classe mère)
 	 * @param clazz Nom de la classe
 	 * @return une map contenant tous les champs de la classe 
 	 */
 	public static  HashMap<String, Field> getAllFieldsRec(Class clazz) {
 		HashMap<String, Field> hFields = new HashMap<String, Field>();
 		Class superClazz = clazz.getSuperclass();
-	    if(superClazz != null){
-	        HashMap<String, Field> hSuper = getAllFieldsRec(superClazz);
-	        hFields.putAll(hSuper);
-	    }
-	    
-	    Field[] fields = clazz.getDeclaredFields();
-	    for (Field field : fields) {
-	    	hFields.put(field.getName(), field);
-	    }
-	    return hFields;
+		if(superClazz != null){
+			HashMap<String, Field> hSuper = getAllFieldsRec(superClazz);
+			hFields.putAll(hSuper);
+		}
+		Field[] fields = clazz.getDeclaredFields();
+		for (Field field : fields) {
+			hFields.put(field.getName(), field);
+		}
+		return hFields;
+	}
+
+
+	/**
+	 * Méthode guessClass<br/>
+	 * Rôle : Devine la classe appelante la librairie
+	 * @return class appelante
+	 * @throws ClassNotFoundException
+	 */
+	public static Class guessClass() throws ClassNotFoundException {
+		/*On devine la classe*/
+		Throwable t = new Throwable();
+		t.fillInStackTrace();
+		StackTraceElement[] stack = t.getStackTrace();
+		return Class.forName(stack[2].getClassName());
+	}
+	
+	/**
+	 * Méthode getClassFromName.<br>
+	 * Rôle : retourne une classe à partir du nom de celle-ci
+	 * @param o
+	 * @return La classe retrouvée à partir du nom
+	 */
+	static private Class getClassFromName (Object o) {
+		try {
+			return Class.forName(o.getClass().getName());
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}	
+	
+	/**
+	 * Méthode initParam.<br>
+	 * @param allField
+	 * @return
+	 */
+	static private String[] HashToArray(HashMap<String, Field> allField) {
+		String[] param = new String[allField.size()];
+		int i=0;
+		for (Field field : allField.values()) {
+			param[i++] = field.getName();
+		}
+		return param;
 	}
 	
 	/**
 	 * 
-	 * M�thode setPropertieFile.<br>
-	 * R�le : Force le fichier propertie utilis� pour lire les valeurs par d�faut
+	 * Méthode setPropertieFile.<br>
+	 * Rôle : Force le fichier propertie utilisé pour lire les valeurs par défaut
 	 *
-	 * @param newPropertieFile : Fichier propertie contenant les couples <i>Param�tre=Valeur</i> � utiliser
+	 * @param newPropertieFile : Fichier propertie contenant les couples <i>Paramètre=Valeur</i> à utiliser
 	 * @throws Exception 
 	 */
 	public static void setPropertieFile(String newPropertieFile) throws Exception {
@@ -418,8 +441,8 @@ public class Param {
 
 	/**
 	 * 
-	 * M�thode readPropertie.<br>
-	 * R�le : permet de charger le fichier properties <i>config.properties</i> situ� dans le
+	 * Méthode readPropertie.<br>
+	 * Rôle : permet de charger le fichier properties <i>config.properties</i> situé dans le
 	 * classpath.
 	 * Ce fichier contient les couples <i>attribut=valeur</i> a modifier dans la classe.
 	 * @throws Exception 
@@ -443,8 +466,194 @@ public class Param {
 		}
 	}
 
-	
+
 	public static void useClassName(boolean BooleanValue) {
 		UseClassName = BooleanValue;
+	}
+	
+	/*
+	 * Méthodes nécessaires pour l'utilisation JMX  
+	 */
+	
+	/*
+	 * (non-Javadoc)
+	 * @see javax.management.DynamicMBean#getAttribute(java.lang.String)
+	 */
+	public Object getAttribute(String attribute)
+	throws AttributeNotFoundException, MBeanException,
+	ReflectionException {
+		HashMap<String, Field> allField = getAllFieldsRec(clazz);
+		if (!allField.containsKey(attribute)) throw new AttributeNotFoundException();
+		try {
+			Field field = allField.get(attribute);
+			field.setAccessible(true);
+			return field.get(clazz);
+		}catch (Exception e) {
+			throw new ReflectionException(e);
+		}
+
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see javax.management.DynamicMBean#setAttribute(javax.management.Attribute)
+	 */
+	public void setAttribute(Attribute attribute)
+	throws AttributeNotFoundException, InvalidAttributeValueException,
+	MBeanException, ReflectionException {
+		try {
+			setParam(attribute.getName(), attribute.getValue().toString());
+		} catch (Exception e) {
+			throw new AttributeNotFoundException();
+		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see javax.management.DynamicMBean#getAttributes(java.lang.String[])
+	 */
+	public AttributeList getAttributes(String[] attributes) {
+		HashMap<String, Field> allField = getAllFieldsRec(clazz);
+		AttributeList resultList = new AttributeList();
+		for (String attribute : attributes) {
+			if (allField.containsKey(attribute))
+			{
+				try {
+					Field field = allField.get(attribute);
+					field.setAccessible(true);
+					Object o = field.get(clazz);
+					resultList.add(new Attribute(attribute,o));
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		return resultList;
+	}
+
+
+	/*
+	 * (non-Javadoc)
+	 * @see javax.management.DynamicMBean#setAttributes(javax.management.AttributeList)
+	 */
+	public AttributeList setAttributes(AttributeList attributes) {
+
+		// Check attributes is not null to avoid NullPointerException later on
+		//
+		if (attributes == null) {
+			throw new RuntimeOperationsException(
+					new IllegalArgumentException(
+					"AttributeList attributes cannot be null"),
+					"Cannot invoke a setter of " + clazz.getName());
+		}
+		AttributeList resultList = new AttributeList();
+
+		// If attributeNames is empty, nothing more to do
+		//
+		if (attributes.isEmpty())
+			return resultList;
+
+		// For each attribute, try to set it and add to the result list if
+		// successfull
+		//
+		for (Iterator i = attributes.iterator(); i.hasNext();) {
+			Attribute attr = (Attribute) i.next();
+			try {
+				setAttribute(attr);
+				String name = attr.getName();
+				Object value = getAttribute(name); 
+				resultList.add(new Attribute(name,value));
+			} catch(Exception e) {
+				e.printStackTrace();
+			}
+		}
+		return resultList;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see javax.management.DynamicMBean#invoke(java.lang.String, java.lang.Object[], java.lang.String[])
+	 */
+	public Object invoke(String actionName, Object[] params, String[] signature)
+	throws MBeanException, ReflectionException {
+		try {
+			Class[] paramTypes = null;
+			if(params != null)
+			{
+				paramTypes = new Class[params.length];
+				for(int i=0;i<params.length;++i)
+				{
+					paramTypes[i] = params[i].getClass();
+				}
+			}
+
+			Method m = clazz.getMethod(actionName,paramTypes);
+			return m.invoke(clazz,params);
+		} catch (Exception e) {
+			throw new ReflectionException(e);
+		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see javax.management.DynamicMBean#getMBeanInfo()
+	 */
+	public MBeanInfo getMBeanInfo() {
+		MBeanNotificationInfo[] dNotifications = new MBeanNotificationInfo[0];
+		MBeanOperationInfo[] dOperations = new MBeanOperationInfo[0];
+		
+		String dClassName = clazz.getName();
+		String dDescription = dClassName + " dynamic MBean (by jLibParam)";
+
+		/**
+		 * On va parcourir les champs dispo, et pour chacun regarder si l'annotation
+		 * contient la valeur passée en paramètre
+		 */
+		HashMap<String,Field> allField = getAllFieldsRec(clazz);
+		List<Field> fields = new ArrayList<Field>();
+		for (Field fieldParam : allField.values()) {
+			jmx fieldAnnotation = fieldParam.getAnnotation(jmx.class);
+			if (fieldAnnotation!=null) fields.add(fieldParam);
+		}
+
+		/*
+		 * Attributes info
+		 */
+		MBeanAttributeInfo[] dAttributes = new MBeanAttributeInfo[fields.size()];
+		int cpt = 0;
+		for (Field field : fields){
+			jmx fieldsAnnotation = field.getAnnotation(jmx.class);
+			dAttributes[cpt++]  =
+				new MBeanAttributeInfo(field.getName(),
+						field.getType().getName(),
+						(fieldsAnnotation.value()=="") ? field.getName() : fieldsAnnotation.value(),
+						fieldsAnnotation.read(),
+						fieldsAnnotation.write(),
+						fieldsAnnotation.is());
+		}
+
+		/*
+		 * Constructor info
+		 */
+		Constructor<?>[] constructors = clazz.getConstructors();
+		MBeanConstructorInfo[] dConstructors = new MBeanConstructorInfo[constructors.length];
+		for (int NbConstructor=0 ; NbConstructor< constructors.length; NbConstructor++) {
+			dConstructors[NbConstructor] =
+				new MBeanConstructorInfo("Constructs a " +
+						"SimpleDynamic object",
+						constructors[NbConstructor]);			  
+		}
+
+		/*
+		 * 
+		 */
+		MBeanInfo dMBeanInfo = new MBeanInfo(dClassName,
+				dDescription,
+				dAttributes,
+				dConstructors,
+				dOperations,
+				dNotifications);
+
+		return dMBeanInfo;
 	}
 }

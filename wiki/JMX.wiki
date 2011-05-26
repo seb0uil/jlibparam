@@ -14,8 +14,8 @@ For example, in sample config class,
     public static Integer INTEGER = 1;
 }}}
 
-parameter to @jmx are :
-value : description of the attribute
-read  : true/false  : is the attribute readable by jmx
-write : true/false  : is the attribute writable by jmx
-is    : true/false  : is the attribute a boolean
+parameters :
+||value || || description of the attribute||
+||read  || true/false  || is the attribute readable by jmx||
+||write || true/false  || is the attribute writable by jmx||
+||is    || true/false  || is the attribute a boolean||

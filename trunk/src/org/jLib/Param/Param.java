@@ -41,6 +41,7 @@ import javax.management.MBeanException;
 import javax.management.MBeanInfo;
 import javax.management.MBeanNotificationInfo;
 import javax.management.MBeanOperationInfo;
+import javax.management.MBeanParameterInfo;
 import javax.management.ReflectionException;
 import javax.management.RuntimeOperationsException;
 
@@ -384,7 +385,7 @@ public class Param implements DynamicMBean {
 		StackTraceElement[] stack = t.getStackTrace();
 		return Class.forName(stack[2].getClassName());
 	}
-	
+
 	/**
 	 * Méthode getClassFromName.<br>
 	 * Rôle : retourne une classe à partir du nom de celle-ci
@@ -400,7 +401,7 @@ public class Param implements DynamicMBean {
 		}
 		return null;
 	}	
-	
+
 	/**
 	 * Méthode initParam.<br>
 	 * @param allField
@@ -414,7 +415,7 @@ public class Param implements DynamicMBean {
 		}
 		return param;
 	}
-	
+
 	/**
 	 * 
 	 * Méthode setPropertieFile.<br>
@@ -470,11 +471,11 @@ public class Param implements DynamicMBean {
 	public static void useClassName(boolean BooleanValue) {
 		UseClassName = BooleanValue;
 	}
-	
+
 	/*
 	 * Méthodes nécessaires pour l'utilisation JMX  
 	 */
-	
+
 	/*
 	 * (non-Javadoc)
 	 * @see javax.management.DynamicMBean#getAttribute(java.lang.String)
@@ -600,8 +601,8 @@ public class Param implements DynamicMBean {
 	 */
 	public MBeanInfo getMBeanInfo() {
 		MBeanNotificationInfo[] dNotifications = new MBeanNotificationInfo[0];
-		MBeanOperationInfo[] dOperations = new MBeanOperationInfo[0];
-		
+
+
 		String dClassName = clazz.getName();
 		String dDescription = dClassName + " dynamic MBean (by jLibParam)";
 
@@ -627,9 +628,9 @@ public class Param implements DynamicMBean {
 				new MBeanAttributeInfo(field.getName(),
 						field.getType().getName(),
 						(fieldsAnnotation.value()=="") ? field.getName() : fieldsAnnotation.value(),
-						fieldsAnnotation.read(),
-						fieldsAnnotation.write(),
-						fieldsAnnotation.is());
+								fieldsAnnotation.read(),
+								fieldsAnnotation.write(),
+								fieldsAnnotation.is());
 		}
 
 		/*
@@ -637,12 +638,50 @@ public class Param implements DynamicMBean {
 		 */
 		Constructor<?>[] constructors = clazz.getConstructors();
 		MBeanConstructorInfo[] dConstructors = new MBeanConstructorInfo[constructors.length];
-		for (int NbConstructor=0 ; NbConstructor< constructors.length; NbConstructor++) {
+		for (int NbConstructor=0 ; NbConstructor < constructors.length; NbConstructor++) {
 			dConstructors[NbConstructor] =
 				new MBeanConstructorInfo("Constructs a " +
 						"SimpleDynamic object",
 						constructors[NbConstructor]);			  
 		}
+
+
+		/*
+		 * Déclaration des méthodes à exposer à JMX
+		 */
+		Method[] methods = clazz.getDeclaredMethods();
+		MBeanOperationInfo[] dOperations = new MBeanOperationInfo[methods.length];
+		for (int NbMethod=0; NbMethod < methods.length; NbMethod++) {
+			Method method = methods[NbMethod];
+			jmx methodAnnotation = method.getAnnotation(jmx.class);
+			if (methodAnnotation!=null) {
+				if (methodAnnotation.paramName() != null) {  /* si l'on a declaré des annotations contenant le nom des paramètres */					
+					/* on s'interesse aux paramètres de la methode */
+					Class<?>[] parametersType = method.getParameterTypes();
+					assert(methodAnnotation.paramName().length==parametersType.length); /* on a autant de nom de paramètre que de paramètre*/
+					
+					MBeanParameterInfo[] dParameters = new MBeanParameterInfo[parametersType.length];
+					for (int NbParam=0; NbParam<parametersType.length; NbParam++) {
+						dParameters[NbParam] =  new MBeanParameterInfo(methodAnnotation.paramName()[NbParam],parametersType[NbParam].getName(),"");
+					}
+					dOperations[NbMethod] = new MBeanOperationInfo(
+							method.getName(),
+							(methodAnnotation.value()=="") ? method.getName() : methodAnnotation.value(),
+									dParameters,
+									method.getReturnType().getName(),
+									MBeanOperationInfo.UNKNOWN
+					);
+				} else { /* si l'on a pas declaré d'annotations contenant le nom des paramètres */
+					dOperations[NbMethod] = new MBeanOperationInfo(
+							(methodAnnotation.value()=="") ? method.getName() : methodAnnotation.value(),
+									method
+					);
+				}
+			}
+
+
+		}
+
 
 		/*
 		 * 

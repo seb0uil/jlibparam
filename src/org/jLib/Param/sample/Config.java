@@ -33,6 +33,10 @@ public class Config extends Param {
 	public static String SAMPLE_PUBLIC_STRING  = "public string from sample";
 	public static String NULL_STRING = null;
 	
+	@jmx(value="Test de method", paramName={"value", "flag"})
+	public static void Test(String value, Boolean flag) {
+		System.out.println("ca test ..." + value + " // " + flag);
+	}
     /**
      * Valeur ne servant qu'a initialiser la classe pour ses valeurs statiques
      * Celle-ci étendant param, la méthode init() permet de modifier les valeurs définies

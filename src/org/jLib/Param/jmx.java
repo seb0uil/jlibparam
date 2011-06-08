@@ -27,7 +27,7 @@ import java.lang.annotation.Target;
  * @author Sébastien Bettinger
  *
  */
-@Target(ElementType.FIELD)
+@Target(value={ElementType.FIELD,ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface jmx {
 	
@@ -40,5 +40,10 @@ public @interface jmx {
 	 * commentaire
 	 */
 	String value() default "";
+	
+	/*
+	 * Tableau contenant le nom des paramètres
+	 */
+	String[] paramName() default "";
 
 }

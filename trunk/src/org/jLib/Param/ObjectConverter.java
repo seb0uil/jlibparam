@@ -62,6 +62,8 @@ public final class ObjectConverter {
     // Init ---------------------------------------------------------------------------------------
 
     private static final Map<String, Method> CONVERTERS = new HashMap<String, Method>();
+    
+    public static String SPLIT_VALUE=",";
 
     static {
         // Preload converters.
@@ -91,7 +93,8 @@ public final class ObjectConverter {
      * @throws RuntimeException If conversion failed somehow. This can be caused by at least
      * an ExceptionInInitializerError, IllegalAccessException or InvocationTargetException.
      */
-    public static <T> T convert(Object from, Class<T> to) {
+    @SuppressWarnings("unchecked")
+	public static <T> T convert(Object from, Class<T> to) {
 
         // Null is just null.
         if (from == null) {
@@ -114,7 +117,7 @@ public final class ObjectConverter {
 
         // Convert the value.
         try {
-            return to.cast(converter.invoke(to, from));
+        		return (T) converter.invoke(to, from);
         } catch (Exception e) {
             throw new RuntimeException("Cannot convert from "
                 + from.getClass().getName() + " to " + to.getName()
@@ -196,10 +199,26 @@ public final class ObjectConverter {
         return Boolean.valueOf(value);
     }
 
+    /**
+     * Converts String to boolean
+     * @param value The String to be converted.
+     * @return The converted boolean value.
+     */
     public static boolean stringToboolean(String value) {
         return Boolean.valueOf(value).booleanValue();
     }
 
-    // You can implement more converter methods here.
+    /**
+     * Converts String to int
+     * @param value The String to be converted.
+     * @return The converted int value.
+     */
+    public static int stringToint(String value) {
+    	return Integer.parseInt(value);
+    }
+    
+    public static String[] stringToArray(String value) {
+    	return value.split(SPLIT_VALUE);
+    }
 
 }

@@ -19,12 +19,10 @@ package org.jLib.Param;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -79,7 +77,7 @@ public class Param implements DynamicMBean {
 	/**
 	 * Classe appelante la librairie
 	 */
-	private static Class clazz = null;
+	private static Class<?> clazz = null;
 
 	/**
 	 * 
@@ -93,7 +91,7 @@ public class Param implements DynamicMBean {
 	 *
 	 * @param clazz
 	 */
-	public static void init(Class clazz_) {
+	public static <T> void init(Class<T> clazz_) {
 		try {
 			clazz = clazz_;
 			useClassName(true);
@@ -117,7 +115,6 @@ public class Param implements DynamicMBean {
 	 */
 	public static void init() {
 		try {
-			readPropertie();
 			if (clazz==null) clazz = guessClass();
 			updateParam(Class.forName(clazz.getName()), null, true);			
 		} catch (Exception e) {
@@ -173,11 +170,12 @@ public class Param implements DynamicMBean {
 	 * Méthode updateParam.<br>
 	 * Rôle : remplace les valeurs des attributs de la classe appelante par celle de la classe étendant Param.<br/>
 	 * Par défaut, ne remplace la valeur que des paramètres ayant une valeur <b>=null</b> 
+	 * @param <T>
 	 *
 	 * @param o : la classe appelante (typiquement <i>this</i>)
 	 * 
 	 */
-	static public void updateParam(Class o) {
+	static public <T> void updateParam(Class<T> o) {
 		updateParam(o,null,false);
 	}
 
@@ -189,11 +187,12 @@ public class Param implements DynamicMBean {
 	 * 
 	 * Méthode updateParam.<br>
 	 * Rôle : remplace les valeurs des attributs de la classe appelante par celle de la classe étendant Param.<br/>
+	 * @param <T>
 	 *
 	 * @param o : la classe appelante (typiquement <i>this</i>)
 	 * @param force : force le remplacement des valeurs, même pour les attributs non null
 	 */
-	static public void updateParam(Class o, boolean force) {
+	static public <T> void updateParam(Class<T> o, boolean force) {
 		updateParam(o,null,force);
 	}
 
@@ -214,12 +213,13 @@ public class Param implements DynamicMBean {
 	 * Méthode updateParam.<br>
 	 * Rôle : remplace les valeurs des attributs de la classe appelante par celle de la classe étendant Param.<br/>
 	 * Par défaut, ne remplace la valeur que des paramètres ayant une valeur =null 
+	 * @param <T>
 	 *
 	 * @param o : la classe appelante (typiquement <i>this</i>)
 	 * @param param : la liste des attributs à modifier (ou null si tous les attributs sont susceptible d'être modifiés)<br/>
 	 * 
 	 */
-	static public void updateParam(Class o, String[] param) {
+	static public <T> void updateParam(Class<T> o, String[] param) {
 		updateParam(o,param,false);
 	}
 
@@ -234,7 +234,7 @@ public class Param implements DynamicMBean {
 	 * 
 	 */
 	static public void updateParam(Object o, String[] param) {
-		Class c = getClassFromName(o);
+		Class<?> c = getClassFromName(o);
 		updateParam(c,param,false);
 	}	
 
@@ -248,13 +248,13 @@ public class Param implements DynamicMBean {
 	 * @param param : la liste des attributs à modifier (ou null si tous les attributs sont susceptible d'être modifiés)<br/>     
 	 * @param force : force le remplacement des valeurs, même pour les attributs non null
 	 */
-	static public void updateParam(Class o, String[] param, boolean force) {
+	static public <T> void updateParam(Class<T> o, String[] param, boolean force) {
 		/**
 		 * On charge la classe pass�e en param�tre
 		 */
 		try {
+			readPropertie();
 			String ClassName = o.getName();
-
 
 			String ClazzName = "";
 			if (UseClassName) ClazzName = ClassName + ".";
@@ -269,6 +269,10 @@ public class Param implements DynamicMBean {
 					param[i] = Fieldparam[i].getName();
 				}
 			}
+			
+			String SplitKey = ObjectConverter.class.getName()+".SPLIT_VALUE";
+			ObjectConverter.SPLIT_VALUE=properties.getProperty(SplitKey, ObjectConverter.SPLIT_VALUE);
+			
 			for (int i=0; i<param.length; i++) {
 				try {
 					Field field = o.getDeclaredField(param[i]);
@@ -281,6 +285,10 @@ public class Param implements DynamicMBean {
 					/**
 					 * Le champ passÃ© en paramÃ¨tre n'est pas prÃ©sent dans la classe
 					 * On laisse passer l'erreur sans en tenir compte
+					 */
+				}   catch (IllegalArgumentException e) {
+					/**
+					 * Le champ passé en paramètre n'est pas static, alors que la classe o l'est
 					 */
 				}
 			}			
@@ -304,8 +312,9 @@ public class Param implements DynamicMBean {
 		 * On charge la classe pass�e en param�tre
 		 */
 		try {
+			readPropertie();
 			String ClassName = o.getClass().getName();
-			Class c = Class.forName(ClassName);
+			Class<?> c = Class.forName(ClassName);
 
 
 			String ClazzName = "";
@@ -354,12 +363,13 @@ public class Param implements DynamicMBean {
 	/**
 	 * Méthode getAllFieldsRec<br/>
 	 * Rôle : Retourne tous les champs de la classe passée en paramètre (y compris ceux de la classe mère)
+	 * @param <T>
 	 * @param clazz Nom de la classe
 	 * @return une map contenant tous les champs de la classe 
 	 */
-	public static  HashMap<String, Field> getAllFieldsRec(Class clazz) {
+	public static  <T> HashMap<String, Field> getAllFieldsRec(Class<T> clazz) {
 		HashMap<String, Field> hFields = new HashMap<String, Field>();
-		Class superClazz = clazz.getSuperclass();
+		Class<?> superClazz = clazz.getSuperclass();
 		if(superClazz != null){
 			HashMap<String, Field> hSuper = getAllFieldsRec(superClazz);
 			hFields.putAll(hSuper);
@@ -375,26 +385,30 @@ public class Param implements DynamicMBean {
 	/**
 	 * Méthode guessClass<br/>
 	 * Rôle : Devine la classe appelante la librairie
+	 * @param <T>
 	 * @return class appelante
 	 * @throws ClassNotFoundException
 	 */
-	public static Class guessClass() throws ClassNotFoundException {
+	@SuppressWarnings("unchecked")
+	public static <T> Class<T> guessClass() throws ClassNotFoundException {
 		/*On devine la classe*/
 		Throwable t = new Throwable();
 		t.fillInStackTrace();
 		StackTraceElement[] stack = t.getStackTrace();
-		return Class.forName(stack[2].getClassName());
+		return (Class<T>) Class.forName(stack[2].getClassName());
 	}
 
 	/**
 	 * Méthode getClassFromName.<br>
 	 * Rôle : retourne une classe à partir du nom de celle-ci
+	 * @param <T>
 	 * @param o
 	 * @return La classe retrouvée à partir du nom
 	 */
-	static private Class getClassFromName (Object o) {
+	@SuppressWarnings("unchecked")
+	static private <T> Class<T> getClassFromName (Object o) {
 		try {
-			return Class.forName(o.getClass().getName());
+			return (Class<T>) Class.forName(o.getClass().getName());
 		} catch (ClassNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

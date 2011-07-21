@@ -16,6 +16,6 @@ public class Constants {
 	/**
 	 * fqdn className of factory Object for the pool
 	 */
-	public static String poolFactory = "org.jLibPool.factory.StringFactory";
+	public static String poolFactory = "org.jLib.Pool.factory.StringFactory";
 
 }

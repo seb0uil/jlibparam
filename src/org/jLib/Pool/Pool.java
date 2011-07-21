@@ -1,13 +1,11 @@
 package org.jLib.Pool;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.apache.log4j.Logger;
 import org.jLib.Pool.factory.IPoolFactory;
-
-
-
 
 /**
  * La classe Pool<T> gère un pool d'élément.<br/>
@@ -25,14 +23,14 @@ public final class Pool<T> {
 	 * Logger
 	 */
 	private static final Logger logger = Logger.getLogger(Pool.class.getName());
-;
-//	static {
-//
-//		URL log4jURL =  Loader.getResource(Constants.log4jFile);
-//		PropertyConfigurator.configure(log4jURL);
-//		logger = LogFactory.getLog( Pool.class.getName());
-//	}
-	
+	;
+	//	static {
+	//
+	//		URL log4jURL =  Loader.getResource(Constants.log4jFile);
+	//		PropertyConfigurator.configure(log4jURL);
+	//		logger = LogFactory.getLog( Pool.class.getName());
+	//	}
+
 	/**
 	 * Pool d'objet
 	 */
@@ -57,28 +55,36 @@ public final class Pool<T> {
 	/**
 	 * Singleton du pool
 	 */
-	private static Pool<?> instance;
+	private static HashMap<IPoolFactory<?>,Pool<?>> instance = new HashMap<IPoolFactory<?>,Pool<?>>();
 
 
 	@SuppressWarnings("unchecked")
 	public static synchronized  <T> Pool<T> getInstance(){
-		if (instance==null)					
-		{
-			try {
-				/**
-				 * On instancie alors le pool avec 10 éléments par défaut
-				 */
-				Object poolFactory = Class.forName(Constants.poolFactory).newInstance();
-				poolFactory = Class.forName((String)Constants.poolFactory).newInstance();
-				instance=new Pool<T>((IPoolFactory<T>) poolFactory, Constants.PoolSize);	
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-
+		try {
+			IPoolFactory<?> poolFactory = (IPoolFactory<?>)Class.forName(Constants.poolFactory).newInstance();
+			return getInstance(poolFactory);
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
-		return (Pool<T>)instance;					
+		return null;
 	}    
 
+	public static synchronized  <T> Pool<T> getInstance(IPoolFactory<?> poolFactory){
+		try {
+			/**
+			 * On instancie alors le pool avec 10 éléments par défaut
+			 */
+			if (!instance.containsKey(poolFactory))					
+			{			
+				Pool<T> instanceFactory = new Pool<T>((IPoolFactory<T>) poolFactory, Constants.PoolSize);
+				instance.put(poolFactory, instanceFactory);
+				return (Pool<T>)instanceFactory;
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
 
 	/**
 	 * Constructeur du pool
@@ -86,7 +92,8 @@ public final class Pool<T> {
 	 * @param poolSize
 	 */
 	private Pool(IPoolFactory<T> factory, Integer poolSize ) {
-		logger.debug("Initialisation du pool avec " + poolSize + " objet ("+factory+")");
+		if (logger.isDebugEnabled()) 
+			logger.debug("Initialisation du pool avec " + poolSize + " objet ("+factory+")");
 		this.factory = factory;
 		this.PoolSize = poolSize;
 		this.nbObject = poolSize;
@@ -113,7 +120,8 @@ public final class Pool<T> {
 			logger.warn("Pool vide => creation de l'objet " + obj.toString());
 		} else {
 			obj =  this.objects.poll();
-			logger.debug("Pool => emprunt de l'objet " + obj.toString());
+			if (logger.isDebugEnabled()) 
+				logger.debug("Pool => emprunt de l'objet " + obj.toString());
 		}
 		return obj;
 	}
@@ -129,7 +137,8 @@ public final class Pool<T> {
 		} else
 			if (this.objects.size() < PoolSize) {
 				this.objects.add(object);
-				logger.debug("Pool => restitution de l'objet " + object.toString());
+				if (logger.isDebugEnabled()) 
+					logger.debug("Pool => restitution de l'objet " + object.toString());
 			} else { 
 				this.nbObject--;
 				logger.warn("Pool plein => destruction de l'objet " + object.toString());
@@ -141,7 +150,8 @@ public final class Pool<T> {
 	 * @return
 	 */
 	public Integer getPoolSize() {
-		logger.debug("Pool => Taille du pool : " + this.PoolSize);
+		if (logger.isDebugEnabled()) 
+			logger.debug("Pool => Taille du pool : " + this.PoolSize);
 		return this.PoolSize;
 	}
 
@@ -153,7 +163,8 @@ public final class Pool<T> {
 	 * @return
 	 */
 	public Integer getNbObject() {
-		logger.debug("Pool => Nbre d'objet : " + this.nbObject);
+		if (logger.isDebugEnabled()) 
+			logger.debug("Pool => Nbre d'objet : " + this.nbObject);
 		return this.nbObject;
 	}
 

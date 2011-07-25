@@ -65,7 +65,7 @@ public class Param implements DynamicMBean {
 	/**
 	 * Flag pour l'utilisation ou non du nom complet de la classe
 	 * dans le fichier properties.<br/>
-	 * Dans le cas ou UseClassName = true, jLibParam lit le fichier properties en pr�fixant les
+	 * Dans le cas ou UseClassName = true, jLibParam lit le fichier properties en préfixant les
 	 * valeur du nom de la classe
 	 * Par exemple :<br/>
 	 * <li>fr.sbe.jLibParam.UseClassName=true<br/></li>
@@ -125,7 +125,7 @@ public class Param implements DynamicMBean {
 	/**
 	 * 
 	 * Méthode init.<br>
-	 * R�ôe : Permet d'initialiser la classe pour les valeurs statiques<br/>
+	 * Rôle : Permet d'initialiser la classe pour les valeurs statiques<br/>
 	 * s'emploie tel que, par exemple :<br/>
 	 * <ul>
 	 * <i>static {init();}</i><br/>
@@ -161,7 +161,7 @@ public class Param implements DynamicMBean {
 	 * @param param : tableau des paramètres à initialiser, ou null pour initialiser toutes les variables
 	 * @throws Exception
 	 */
-	static public void initParam(String[] param) throws ClassNotFoundException, IllegalArgumentException, IllegalAccessException {
+	static public void initParam(String[] param) {
 		updateParam(clazz, param, false);
 	}	
 
@@ -250,7 +250,7 @@ public class Param implements DynamicMBean {
 	 */
 	static public <T> void updateParam(Class<T> o, String[] param, boolean force) {
 		/**
-		 * On charge la classe pass�e en param�tre
+		 * On charge la classe passée en paramètre
 		 */
 		try {
 			readPropertie();
@@ -269,27 +269,34 @@ public class Param implements DynamicMBean {
 					param[i] = Fieldparam[i].getName();
 				}
 			}
-			
+
 			String SplitKey = ObjectConverter.class.getName()+".SPLIT_VALUE";
 			ObjectConverter.SPLIT_VALUE=properties.getProperty(SplitKey, ObjectConverter.SPLIT_VALUE);
-			
+
 			for (int i=0; i<param.length; i++) {
 				try {
 					Field field = o.getDeclaredField(param[i]);
-					field.setAccessible(true);
+					if (!field.isAccessible()) field.setAccessible(true);
+
 					Object objAnnuaire = properties.get(ClazzName + param[i]);
 					if ( ((field.get(o) == null) || force) && (objAnnuaire != null) ) {
 						field.set(o,  ObjectConverter.convert(objAnnuaire, field.getType()) );
 					}
-				}   catch (NoSuchFieldException Field_e) {
+				} catch (SecurityException e) {
 					/**
-					 * Le champ passÃ© en paramÃ¨tre n'est pas prÃ©sent dans la classe
+					 * rien, on tente de mettre a jour les privates, mais cela ne marche pas toujours
+					 */
+				} catch (NoSuchFieldException Field_e) {
+					/**
+					 * Le champ passé en paramètre n'est pas présent dans la classe
 					 * On laisse passer l'erreur sans en tenir compte
 					 */
-				}   catch (IllegalArgumentException e) {
+				} catch (IllegalArgumentException e) {
 					/**
 					 * Le champ passé en paramètre n'est pas static, alors que la classe o l'est
 					 */
+				} catch (Exception e) {
+					e.printStackTrace();
 				}
 			}			
 		} catch (Exception e) {
@@ -309,7 +316,7 @@ public class Param implements DynamicMBean {
 	 */
 	static public void updateParamInstance(Object o, String[] param, boolean force) {
 		/**
-		 * On charge la classe pass�e en param�tre
+		 * On charge la classe passée en paramètre
 		 */
 		try {
 			readPropertie();
@@ -338,7 +345,7 @@ public class Param implements DynamicMBean {
 					}
 				}   catch (NoSuchFieldException Field_e) {
 					/**
-					 * Le champ passÃ© en paramÃ¨tre n'est pas prÃ©sent dans la classe
+					 * Le champ passé en paramètre n'est pas présent dans la classe
 					 * On laisse passer l'erreur sans en tenir compte
 					 */
 				}
@@ -441,7 +448,7 @@ public class Param implements DynamicMBean {
 	public static void setPropertieFile(String newPropertieFile) throws Exception {
 		/*
 		 * On sauvegarde l'objet properties afin de pouvoir le remettre dans le cas ou une
-		 * exception est lev� par la lecture du fichier.
+		 * exception est levée par la lecture du fichier.
 		 */
 		Propertie = newPropertieFile;
 		Properties properties_old = (Properties) properties.clone();
@@ -480,7 +487,6 @@ public class Param implements DynamicMBean {
 			}
 		}
 	}
-
 
 	public static void useClassName(boolean BooleanValue) {
 		UseClassName = BooleanValue;
@@ -673,7 +679,7 @@ public class Param implements DynamicMBean {
 					/* on s'interesse aux paramètres de la methode */
 					Class<?>[] parametersType = method.getParameterTypes();
 					assert(methodAnnotation.paramName().length==parametersType.length); /* on a autant de nom de paramètre que de paramètre*/
-					
+
 					MBeanParameterInfo[] dParameters = new MBeanParameterInfo[parametersType.length];
 					for (int NbParam=0; NbParam<parametersType.length; NbParam++) {
 						dParameters[NbParam] =  new MBeanParameterInfo(methodAnnotation.paramName()[NbParam],parametersType[NbParam].getName(),"");

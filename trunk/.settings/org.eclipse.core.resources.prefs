@@ -1,4 +1,12 @@
-#Wed May 25 14:35:51 CEST 2011
+#Sat Jul 23 20:00:50 CEST 2011
 eclipse.preferences.version=1
-encoding//src/org/jLib/Param/Param.java=UTF-8
-encoding//src/org/jLib/Param/jmx.java=UTF-8
+encoding//src/main/org/jLib/Param/ObjectConverter.java=UTF-8
+encoding//src/main/org/jLib/Param/Param.java=UTF-8
+encoding//src/main/org/jLib/Param/jmx.java=UTF-8
+encoding//src/main/org/jLib/Pool/Constants.java=UTF-8
+encoding//src/main/org/jLib/Pool/Pool.java=UTF-8
+encoding//src/sample/org/jLib/Param/sample/Config.java=UTF-8
+encoding//src/sample/org/jLib/Param/sample/Sample.java=UTF-8
+encoding//src/sample/org/jLib/Param/sample/SampleJmx.java=UTF-8
+encoding//src/sample/org/jLib/Pool/sample/Sample.java=UTF-8
+encoding/<project>=ISO-8859-1

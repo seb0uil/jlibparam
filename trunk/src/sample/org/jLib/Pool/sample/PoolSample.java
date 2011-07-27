@@ -24,7 +24,7 @@ import org.jLib.Pool.factory.IntegerFactory;
  * @author seb0uil
  *
  */
-public class Sample {
+public class PoolSample {
 	public static void main(String[] args) {
 		/*
 		 * We get the pool instance

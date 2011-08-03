@@ -212,7 +212,7 @@ public class PoolHolder {
 			for (ObjectHolder objectHolder : cloneInUsed) {
 				if (objectHolder.get() == o) {  //on utilise == pour vérifier qu'il s'agit bien de la même instance d'objet !!
 					ListOfObjectInUsed.remove(objectHolder);
-					ListOfObjectAvailable.add(objectHolder);
+					ListOfObjectAvailable.add(0,objectHolder);
 					objectAlreadyInList = true;
 					break;
 				}
@@ -229,4 +229,79 @@ public class PoolHolder {
 		setObjectAvailable(mapOfObjectAvailable);
 		setObjectInUsed(mapOfObjectInUsed);
 	}
+	
+	/**
+	 * Ajoute un objet au pool, associé avec la clé passée en paramètre.<br/>
+	 * L'objet est placé dans la liste des objets utilisés.
+	 * Dans le cas ou des objets sont déjà présent dans le pool, pour la clé donnée,
+	 * la classe est vérifée. En cas d'incohérence, une BadClassException est levée.<br/>
+	 * Dans le cas ou l'objet est déjà présent dans la liste des objets utilisés, une AlreadyInUsedException est levé
+	 * @param key clé à associer à l'objet à stocker
+	 * @param o objet à stocker dans le pool
+	 * @throws BadClassException
+	 * @throws AlreadyInUsedException 
+	 */
+	synchronized public static void putInUsed(String key, Object o) throws BadClassException, AlreadyInUsedException {
+		Map<String, ArrayList<ObjectHolder>> mapOfObjectAvailable = getObjectAvailable();
+		Map<String, ArrayList<ObjectHolder>> mapOfObjectInUsed = getObjectInUsed();
+		
+		Class<?> clazz = o.getClass();
+		
+		if (!mapOfObjectAvailable.containsKey(key)) {
+			ObjectHolder holder = new ObjectHolder(o);
+			ArrayList<ObjectHolder> ListOfObjectInUsed = new ArrayList<ObjectHolder>();
+			ListOfObjectInUsed.add(holder);
+			mapOfObjectInUsed.put(key, ListOfObjectInUsed);
+			mapOfObjectAvailable.put(key, new ArrayList<ObjectHolder>());
+			mapOfClass.put(key, clazz);
+		} else {
+			if (!clazz.isAssignableFrom(mapOfClass.get(key))) {
+				throw new BadClassException("Classe of " + o.toString() + "("+ clazz.getName() +") is different from " + mapOfClass.get(key).getName());
+			}
+			
+			/*
+			 * On regarde si l'objet retourné est l'un de ceux emprunté
+			 */
+			ArrayList<ObjectHolder> ListOfObjectInUsed = mapOfObjectInUsed.get(key);
+			ArrayList<ObjectHolder> ListOfObjectAvailable = mapOfObjectAvailable.get(key);
+			
+			@SuppressWarnings("unchecked")
+			ArrayList<ObjectHolder> cloneInUsed = (ArrayList<ObjectHolder>) ListOfObjectInUsed.clone();
+			@SuppressWarnings("unchecked")
+			ArrayList<ObjectHolder> cloneAvailable = (ArrayList<ObjectHolder>) ListOfObjectAvailable.clone();
+			
+			boolean objectAlreadyInList = false;
+			/*
+			 * On parcourt la liste des objets disponibles pour déplacer l'objet à ajouter vers
+			 * les objets utilisés si nécessaire
+			 */
+			for (ObjectHolder objectHolder : cloneAvailable) {
+				if (objectHolder.get() == o) {  //on utilise == pour vérifier qu'il s'agit bien de la même instance d'objet !!
+					ListOfObjectInUsed.add(objectHolder);
+					ListOfObjectAvailable.remove(objectHolder);
+					objectAlreadyInList = true;
+					break;
+				}
+			}
+			
+			/*
+			 * On vérifie la liste des objets utilisés, si l'objet est déjà présent, on lève une exception
+			 */
+			for (ObjectHolder objectHolder : cloneInUsed) {
+				if (objectHolder.get() == o) {  //on utilise == pour vérifier qu'il s'agit bien de la même instance d'objet !!
+					throw new AlreadyInUsedException();
+				}
+			}
+			
+			if (!objectAlreadyInList) {
+				ObjectHolder holder = new ObjectHolder(o);
+				ListOfObjectInUsed.add(holder);				
+			}
+		}
+		/*
+		 * On remet ensuite les SoftReference a jour avec les Map
+		 */
+		setObjectAvailable(mapOfObjectAvailable);
+		setObjectInUsed(mapOfObjectInUsed);
+	}	
 }

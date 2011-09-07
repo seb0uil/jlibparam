@@ -11,12 +11,12 @@ import org.apache.log4j.Logger;
 import org.jLib.Pool.factory.IPoolFactory;
 
 /**
- * La classe Pool<T> gère un pool d'élément.<br/>
- * Le nombre d'élément du pool est définie dans le fichier de propriété PROPERTIES_POOLPROXYSERVICE<br/>
- * Dans le cas ou le nombre d'élément n'est pas suffisant, de nouveau élément sont créé tant que cela est nécessaire
- * et détruit après utilisation de façon à conserver le nombre initial d'élément.
+ * La classe Pool<T> gÃ¨re un pool d'Ã©lÃ©ment.<br/>
+ * Le nombre d'Ã©lÃ©ment du pool est dÃ©finie dans le fichier de propriÃ©tÃ© PROPERTIES_POOLPROXYSERVICE<br/>
+ * Dans le cas ou le nombre d'Ã©lÃ©ment n'est pas suffisant, de nouveau Ã©lÃ©ment sont crÃ©Ã© tant que cela est nÃ©cessaire
+ * et dÃ©truit aprÃ¨s utilisation de faÃ§on Ã  conserver le nombre initial d'Ã©lÃ©ment.
  *  
- * @author sébastien Bettinger
+ * @author sÃ©bastien Bettinger
  *
  * @param <T>
  */
@@ -49,12 +49,12 @@ public final class Pool<T> {
 
 	/**
 	 * Nombre d'objet en cours dans le pool<br/>
-	 * Ce nombre peut être supérieur à la taille initial, mais pas inférieur
+	 * Ce nombre peut Ãªtre supÃ©rieur Ã  la taille initial, mais pas infÃ©rieur
 	 */
 	//	private Integer nbObject = 0;
 
 	/**
-	 * Factory de création des objets du pool
+	 * Factory de crÃ©ation des objets du pool
 	 */
 	private IPoolFactory<T> factory;
 
@@ -79,7 +79,7 @@ public final class Pool<T> {
 	public static synchronized  <T> Pool<T> getInstance(IPoolFactory<?> poolFactory){
 		try {
 			/**
-			 * On instancie alors le pool avec 10 éléments par défaut
+			 * On instancie alors le pool avec 10 Ã©lÃ©ments par dÃ©faut
 			 */
 			if (!instance.containsKey(poolFactory))					
 			{			
@@ -126,7 +126,7 @@ public final class Pool<T> {
 		if (this.objects.size()==0) {
 			/*
 			 * Il n'y a plus d'objet de dispo dans le pool,
-			 * on regarde donc dans ceux déjà sortie, si certains ont expiré et peuvent être réutilisé
+			 * on regarde donc dans ceux dÃ©jÃ  sortie, si certains ont expirÃ© et peuvent Ãªtre rÃ©utilisÃ©
 			 */
 			if (listObjects.size() >= Constants.MaxPoolSize) {
 				Enumeration<T> e = locked.keys();
@@ -134,7 +134,7 @@ public final class Pool<T> {
 					T lockObj = e.nextElement();
 
 					/*
-					 * Si l'objet a expiré
+					 * Si l'objet a expirÃ©
 					 */
 					if ((now - locked.get(lockObj)) > expirationTime) {
 						// object has expired
@@ -186,14 +186,14 @@ public final class Pool<T> {
 			locked.remove(object);
 		}
 		/*
-		 * On purge les objets périmés
+		 * On purge les objets pÃ©rimÃ©s
 		 */
 		Enumeration<T> e = locked.keys();
 		long now = System.currentTimeMillis();
 		while (e.hasMoreElements()) {
 			T lockObj = e.nextElement();
 			/*
-			 * Si l'objet a expiré
+			 * Si l'objet a expirÃ©
 			 */
 			if ((now - locked.get(lockObj)) > expirationTime) {
 				// object has expired
@@ -226,8 +226,8 @@ public final class Pool<T> {
 	/**
 	 * Renvoie le nombre d'objet dans
 	 * le pool<br/>
-	 * Au minimum, égale à getPoolSize()<br/>
-	 * indique si le PoolSize est dépassé
+	 * Au minimum, Ã©gale Ã  getPoolSize()<br/>
+	 * indique si le PoolSize est dÃ©passÃ©
 	 * @return
 	 */
 	public Integer getNbObject() {

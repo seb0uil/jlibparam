@@ -12,7 +12,7 @@ public class ObjectHolder {
 	/**
 	 * Valeur par défaut du timeout en ms
 	 */
-	public static Long DEFAULT_DEADOUT = 1000L; //*60*60*8L; // 8h
+	public static Long DEFAULT_DEADOUT = 1000*60*60*8L; // 8h
 	
 	private Long timestamp;
 	private Long timeout = DEFAULT_TIMEOUT;

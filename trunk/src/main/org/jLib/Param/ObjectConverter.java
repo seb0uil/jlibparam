@@ -173,6 +173,15 @@ public final class ObjectConverter {
     }
 
     /**
+     * Converts String to Long.
+     * @param value The String to be converted.
+     * @return The converted Long value.
+     */
+    public static Long stringToLong(String value) {
+        return Long.valueOf(value);
+    }
+    
+    /**
      * Converts String to Integer.
      * @param value The String to be converted.
      * @return The converted Integer value.

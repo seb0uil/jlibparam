@@ -364,5 +364,13 @@ public class PoolHolder {
 		 */
 		setObjectAvailable(mapOfObjectAvailable);
 		setObjectInUsed(mapOfObjectInUsed);
-	}	
+	}
+	
+	/**
+	 * Vide complêtement le poolHolder de tous les objets qu'il contient
+	 */
+	synchronized public static void cleanAll() {
+		setObjectAvailable( new HashMap<String, ArrayList<ObjectHolder>>() );
+		setObjectInUsed( new HashMap<String, ArrayList<ObjectHolder>>() );
+	}
 }

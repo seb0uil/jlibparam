@@ -9,55 +9,47 @@
     <property name="ECLIPSE_HOME" value="../../../../opt/eclipse"/>
     <property name="debuglevel" value="source,lines,vars"/>
     <property name="target" value="1.5"/>
-    <property name="source" value="1.5"/>
+	<property name="source" value="1.5"/>
+	
+	<property name="dist" value="dist"/>
+	<property name="bin" value="bin"/>
+	<property name="src" value="src/main"/>
+	
+	
+	
     <path id="jLibParam-googlecode.classpath">
-        <pathelement location="bin"/>
+        <pathelement location="${bin}"/>
         <pathelement location="lib/log4j-1.2.8.jar"/>
     </path>
+	
     <target name="init">
-        <mkdir dir="bin"/>
+        <mkdir dir="${bin}"/>
         <copy includeemptydirs="false" todir="bin">
-            <fileset dir="src/main">
-                <exclude name="**/*.launch"/>
-                <exclude name="**/*.java"/>
-            </fileset>
-        </copy>
-        <copy includeemptydirs="false" todir="bin">
-            <fileset dir="src/sample">
+            <fileset dir="${src}">
                 <exclude name="**/*.launch"/>
                 <exclude name="**/*.java"/>
             </fileset>
         </copy>
     </target>
+	
     <target name="clean">
-        <delete dir="bin"/>
+        <delete dir="${bin}"/>
     </target>
-    <target depends="clean" name="cleanall"/>
-    <target depends="build-subprojects,build-project" name="build"/>
-    <target name="build-subprojects"/>
-    <target depends="init" name="build-project">
+    
+    
+    <target depends="init" name="build">
         <echo message="${ant.project.name}: ${ant.file}"/>
-        <javac debug="true" debuglevel="${debuglevel}" destdir="bin" source="${source}" target="${target}">
-            <src path="src/main"/>
-            <classpath refid="jLibParam-googlecode.classpath"/>
-        </javac>
-        <javac debug="true" debuglevel="${debuglevel}" destdir="bin" source="${source}" target="${target}">
-            <src path="src/sample"/>
+        <javac debug="true" debuglevel="${debuglevel}" destdir="${bin}" source="${source}" target="${target}">
+            <src path="${src}"/>
             <classpath refid="jLibParam-googlecode.classpath"/>
         </javac>
     </target>
-    <target description="Build all projects which reference this project. Useful to propagate changes." name="build-refprojects"/>
-    <target description="copy Eclipse compiler jars to ant lib directory" name="init-eclipse-compiler">
-        <copy todir="${ant.library.dir}">
-            <fileset dir="${ECLIPSE_HOME}/plugins" includes="org.eclipse.jdt.core_*.jar"/>
-        </copy>
-        <unzip dest="${ant.library.dir}">
-            <patternset includes="jdtCompilerAdapter.jar"/>
-            <fileset dir="${ECLIPSE_HOME}/plugins" includes="org.eclipse.jdt.core_*.jar"/>
-        </unzip>
-    </target>
-    <target description="compile project with Eclipse compiler" name="build-eclipse-compiler">
-        <property name="build.compiler" value="org.eclipse.jdt.core.JDTCompilerAdapter"/>
-        <antcall target="build"/>
-    </target>
+	
+	<target name="jar" depends="init,build">
+		<mkdir dir="${dist}"/>
+		<jar 
+			jarfile="${dist}/jLibParam.jar"
+		  	basedir="${bin}"
+		/>
+	</target>
 </project>
